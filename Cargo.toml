@@ -1,0 +1,13 @@
+[package]
+name = "bullet_game"
+version = "0.1.0"
+authors = ["Tyler Reisinger <reisinger.tyler@gmail.com>"]
+
+[dependencies]
+float_duration = "0.3.3"
+game_time = "0.2.0"
+cgmath = "0.14.1"
+glutin = "0.8.0"
+chrono = "0.4.0"
+piston2d-graphics = "0.21.1"
+piston2d-gfx_graphics = "0.41.0"
