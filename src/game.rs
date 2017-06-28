@@ -38,11 +38,9 @@ impl Game {
             .with_title("Game")
             .build(&evt_loop)
             .expect("Unable to create window");
-        
-        unsafe {
-            window.make_current()
-        }.expect("Unable to activate OpenGL context.");
-        
+
+        unsafe { window.make_current() }.expect("Unable to activate OpenGL context.");
+
         (window, evt_loop)
     }
 
@@ -56,8 +54,8 @@ impl Game {
         use game_time::FrameCount;
 
         let mut clock = game_time::GameClock::new();
-        let mut fps_counter = game_time::FrameCounter::new(
-            30.0, game_time::framerate::LinearAverageSampler::new());
+        let mut fps_counter =
+            game_time::FrameCounter::new(30.0, game_time::framerate::LinearAverageSampler::new());
 
         self.is_running = true;
 
@@ -73,7 +71,11 @@ impl Game {
             self.window.swap_buffers().unwrap();
 
             println!("{} -- {}", time.total_game_time(), time.total_wall_time());
-            println!("{} -- {}", time.elapsed_game_time(), time.elapsed_wall_time());
+            println!(
+                "{} -- {}",
+                time.elapsed_game_time(),
+                time.elapsed_wall_time()
+            );
             println!("{}", fps_counter.average_frame_rate());
 
             clock.sleep_remaining(&fps_counter);
@@ -84,13 +86,11 @@ impl Game {
         use glutin::{Event, WindowEvent};
 
         let mut is_running = true;
-        self.evt_loop.poll_events(|evt| {
-            match evt {
-                Event::WindowEvent{event: e, ..} => {
-                    match e {
-                        WindowEvent::Closed => is_running = false,
-                        _ => (),
-                    }
+        self.evt_loop.poll_events(|evt| match evt {
+            Event::WindowEvent { event: e, .. } => {
+                match e {
+                    WindowEvent::Closed => is_running = false,
+                    _ => (),
                 }
             }
         });
@@ -98,11 +98,12 @@ impl Game {
         self.is_running = is_running;
     }
 
-    fn update(&mut self, time: &GameTime) {
-    }
+    fn update(&mut self, time: &GameTime) {}
 
     fn draw(&mut self, time: &GameTime) {
-        let mut gl_ctx = self.gl_context.as_mut().expect("GlContext was not created properly!");
+        let mut gl_ctx = self.gl_context.as_mut().expect(
+            "GlContext was not created properly!",
+        );
 
         let viewport = Game::build_window_viewport(&self.window);
 
@@ -112,8 +113,12 @@ impl Game {
 
             let transform = ctx.transform;
 
-            graphics::Rectangle::new([1.0, 0.0, 0.0, 1.0])
-                .draw([100.0, 100.0, 200.0, 200.0], &ctx.draw_state, transform, gl);
+            graphics::Rectangle::new([1.0, 0.0, 0.0, 1.0]).draw(
+                [100.0, 100.0, 200.0, 200.0],
+                &ctx.draw_state,
+                transform,
+                gl,
+            );
         });
     }
 
