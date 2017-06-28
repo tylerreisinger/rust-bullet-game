@@ -1,11 +1,13 @@
 use std::os;
 
 use world;
+use entities;
 
 use graphics::{self, Graphics, Transformed};
 use opengl_graphics::{self, GlGraphics};
 use gl;
 use glutin;
+use specs;
 
 use game_time::{self, GameTime};
 
@@ -44,9 +46,16 @@ impl Game {
         (window, evt_loop)
     }
 
-    pub fn run(&mut self) {
+    pub fn initialize(&mut self) {
+        let mut entity_set = specs::World::new();
         let graphics = init_graphics(&mut self.window);
         self.gl_context = Some(graphics);
+        entities::register_components(&mut entity_set);
+    }
+
+    pub fn run(&mut self) {
+        self.initialize();
+
         self.game_loop();
     }
 

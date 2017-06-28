@@ -11,6 +11,7 @@ extern crate specs;
 pub mod game;
 pub mod world;
 pub mod entities;
+pub mod render;
 
 fn main() {
     let mut game = game::Game::build_with_defaults();
