@@ -13,7 +13,7 @@ extern crate shred_derive;
 
 pub mod game;
 pub mod world;
-pub mod entities;
+pub mod ecs;
 pub mod render;
 
 fn main() {

@@ -2,7 +2,7 @@ use specs::{self, ReadStorage, WriteStorage, Join};
 use cgmath::Vector2;
 use game_time::GameTime;
 
-use entities::Component;
+use ecs::component::Component;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Position(pub Vector2<f64>);
