@@ -9,10 +9,10 @@ impl World {
         World { components }
     }
 
-    pub fn get_components(&self) -> &specs::World {
+    pub fn get_specs(&self) -> &specs::World {
         &self.components
     }
-    pub fn get_components_mut(&mut self) -> &mut specs::World {
+    pub fn get_specs_mut(&mut self) -> &mut specs::World {
         &mut self.components
     }
 }

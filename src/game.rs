@@ -36,11 +36,12 @@ impl Game {
     }
 
     pub fn create_window() -> (glutin::Window, glutin::EventsLoop) {
+        let window_dimensions = (1200, 800);
         let evt_loop = glutin::EventsLoop::new();
         let window = glutin::WindowBuilder::new()
             .with_gl_profile(glutin::GlProfile::Core)
             .with_gl(glutin::GlRequest::Specific(glutin::Api::OpenGl, (3, 2)))
-            .with_dimensions(1200, 800)
+            .with_dimensions(window_dimensions.0, window_dimensions.1)
             .with_title("Game")
             .build(&evt_loop)
             .expect("Unable to create window");
@@ -54,7 +55,7 @@ impl Game {
         let graphics = init_graphics(&mut self.window);
         self.gl_context = Some(graphics);
 
-        let entity_set = self.world.get_components_mut();
+        let entity_set = self.world.get_specs_mut();
         entity_set
             .create_entity()
             .with(entities::pos::Position(cgmath::Vector2::new(50.0, 50.0)))
@@ -85,7 +86,7 @@ impl Game {
 
             self.handle_events();
 
-            self.world.get_components_mut().add_resource_with_id(
+            self.world.get_specs_mut().add_resource_with_id(
                 time.clone(),
                 0,
             );
@@ -95,21 +96,7 @@ impl Game {
 
             self.window.swap_buffers().unwrap();
 
-            println!("{} -- {}", time.total_game_time(), time.total_wall_time());
-            println!(
-                "{} -- {}",
-                time.elapsed_game_time(),
-                time.elapsed_wall_time()
-            );
-            println!("{}", fps_counter.average_frame_rate());
-
-            for e in self.world.get_components().entities().join() {
-                let pos_reader = self.world
-                    .get_components()
-                    .read::<entities::pos::Position>();
-                let pos = pos_reader.get(e).unwrap();
-                println!(">>> Entity {} @ {:?}", e.id(), pos.0);
-            }
+            self.post_frame(&time, &fps_counter);
 
             clock.sleep_remaining(&fps_counter);
         }
@@ -135,9 +122,9 @@ impl Game {
         let mut dispatcher = specs::DispatcherBuilder::new()
             .add(entities::pos::MovementSystem, "movement", &[])
             .build();
-        dispatcher.dispatch(&mut self.world.get_components_mut().res);
+        dispatcher.dispatch(&mut self.world.get_specs_mut().res);
 
-        self.world.get_components_mut().maintain();
+        self.world.get_specs_mut().maintain();
     }
 
     fn draw(&mut self, time: &GameTime) {
@@ -159,6 +146,22 @@ impl Game {
                 gl,
             );
         });
+    }
+
+    fn post_frame<C: game_time::FrameCount>(&mut self, time: &GameTime, fps_counter: &C) {
+        println!("{} -- {}", time.total_game_time(), time.total_wall_time());
+        println!(
+            "{} -- {}",
+            time.elapsed_game_time(),
+            time.elapsed_wall_time()
+        );
+        println!("{}", fps_counter.average_frame_rate());
+
+        for e in self.world.get_specs().entities().join() {
+            let pos_reader = self.world.get_specs().read::<entities::pos::Position>();
+            let pos = pos_reader.get(e).unwrap();
+            println!(">>> Entity {} @ {:?}", e.id(), pos.0);
+        }
     }
 
     fn build_window_viewport(window: &glutin::Window) -> graphics::Viewport {
