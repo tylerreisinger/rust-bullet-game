@@ -7,6 +7,9 @@ extern crate graphics;
 extern crate opengl_graphics;
 extern crate gl;
 extern crate specs;
+extern crate shred;
+#[macro_use]
+extern crate shred_derive;
 
 pub mod game;
 pub mod world;

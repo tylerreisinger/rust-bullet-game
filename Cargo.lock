@@ -10,6 +10,8 @@ dependencies = [
  "glutin 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "piston2d-graphics 0.21.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "piston2d-opengl_graphics 0.44.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "shred 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "shred-derive 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "specs 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 

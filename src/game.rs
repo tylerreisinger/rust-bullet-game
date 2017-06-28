@@ -7,7 +7,8 @@ use graphics::{self, Graphics, Transformed};
 use opengl_graphics::{self, GlGraphics};
 use gl;
 use glutin;
-use specs;
+use specs::{self, Join};
+use cgmath;
 
 use game_time::{self, GameTime};
 
@@ -22,11 +23,14 @@ pub struct Game {
 impl Game {
     pub fn build_with_defaults() -> Game {
         let (window, evt_loop) = Game::create_window();
+        let mut entity_set = specs::World::new();
+        entities::register_components(&mut entity_set);
+
         Game {
             window,
             evt_loop,
             is_running: false,
-            world: world::World::new(),
+            world: world::World::new(entity_set),
             gl_context: None,
         }
     }
@@ -47,10 +51,17 @@ impl Game {
     }
 
     pub fn initialize(&mut self) {
-        let mut entity_set = specs::World::new();
         let graphics = init_graphics(&mut self.window);
         self.gl_context = Some(graphics);
-        entities::register_components(&mut entity_set);
+
+        let entity_set = self.world.get_components_mut();
+        entity_set
+            .create_entity()
+            .with(entities::pos::Position(cgmath::Vector2::new(50.0, 50.0)))
+            .with(entities::pos::Movable(cgmath::Vector2::new(0.0, 1.0)))
+            .build();
+
+        entity_set.maintain();
     }
 
     pub fn run(&mut self) {
@@ -74,6 +85,11 @@ impl Game {
 
             self.handle_events();
 
+            self.world.get_components_mut().add_resource_with_id(
+                time.clone(),
+                0,
+            );
+
             self.update(&time);
             self.draw(&time);
 
@@ -86,6 +102,14 @@ impl Game {
                 time.elapsed_wall_time()
             );
             println!("{}", fps_counter.average_frame_rate());
+
+            for e in self.world.get_components().entities().join() {
+                let pos_reader = self.world
+                    .get_components()
+                    .read::<entities::pos::Position>();
+                let pos = pos_reader.get(e).unwrap();
+                println!(">>> Entity {} @ {:?}", e.id(), pos.0);
+            }
 
             clock.sleep_remaining(&fps_counter);
         }
@@ -107,7 +131,14 @@ impl Game {
         self.is_running = is_running;
     }
 
-    fn update(&mut self, time: &GameTime) {}
+    fn update(&mut self, time: &GameTime) {
+        let mut dispatcher = specs::DispatcherBuilder::new()
+            .add(entities::pos::MovementSystem, "movement", &[])
+            .build();
+        dispatcher.dispatch(&mut self.world.get_components_mut().res);
+
+        self.world.get_components_mut().maintain();
+    }
 
     fn draw(&mut self, time: &GameTime) {
         let mut gl_ctx = self.gl_context.as_mut().expect(
@@ -118,7 +149,6 @@ impl Game {
 
         gl_ctx.draw(viewport, |ctx, gl| {
             gl.clear_color([0.8, 0.8, 0.8, 1.0]);
-            println!("{:?}", ctx.draw_state);
 
             let transform = ctx.transform;
 
