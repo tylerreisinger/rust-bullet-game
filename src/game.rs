@@ -104,10 +104,9 @@ impl Game {
 
             self.handle_events();
 
-            self.world.get_specs_mut().add_resource_with_id(
-                time.clone(),
-                0,
-            );
+            self.world
+                .get_specs_mut()
+                .add_resource_with_id(time.clone(), 0);
 
             self.update(&time);
             self.draw(&time);
