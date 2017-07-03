@@ -113,7 +113,7 @@ impl Game {
 
             self.window.swap_buffers().unwrap();
 
-            self.post_frame(&time, &fps_counter);
+            //self.post_frame(&time, &fps_counter);
 
             clock.sleep_remaining(&fps_counter);
         }
@@ -127,6 +127,12 @@ impl Game {
             Event::WindowEvent { event: e, .. } => {
                 match e {
                     WindowEvent::Closed => is_running = false,
+                    WindowEvent::KeyboardInput(state, code, virt, modi) => {
+                        println!("{:?} {} {:?} {:?}", state, code, virt, modi);
+                    }
+                    WindowEvent::ReceivedCharacter(ch) => {
+                        println!("Char: {}", ch);
+                    }
                     _ => (),
                 }
             }
