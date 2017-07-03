@@ -1,10 +1,10 @@
 use std::os;
 
 use world;
-use ecs;
 use ecs::component;
+use render;
 
-use graphics::{self, Graphics, Transformed};
+use graphics;
 use opengl_graphics::{self, GlGraphics};
 use gl;
 use glutin;
@@ -36,6 +36,13 @@ impl Game {
         }
     }
 
+    pub fn world(&self) -> &world::World {
+        &self.world
+    }
+    pub fn world_mut(&mut self) -> &mut world::World {
+        &mut self.world
+    }
+
     pub fn create_window() -> (glutin::Window, glutin::EventsLoop) {
         let window_dimensions = (1200, 800);
         let evt_loop = glutin::EventsLoop::new();
@@ -54,6 +61,8 @@ impl Game {
     }
 
     pub fn initialize(&mut self) {
+        use render::{RectangleGraphic, RenderGraphicState};
+
         let graphics = init_graphics(&mut self.window);
         self.gl_context = Some(graphics);
 
@@ -61,7 +70,14 @@ impl Game {
         entity_set
             .create_entity()
             .with(component::pos::Position(cgmath::Vector2::new(50.0, 50.0)))
-            .with(component::pos::Movable(cgmath::Vector2::new(0.0, 1.0)))
+            .with(component::pos::Movable(cgmath::Vector2::new(0.0, 4.0)))
+            .with(component::render::Render::new(
+                RenderGraphicState::Rectangle(RectangleGraphic {
+                    rect: graphics::Rectangle::new([1.0, 0.0, 1.0, 1.0]),
+                    width: 25.0,
+                    height: 25.0,
+                }),
+            ))
             .build();
 
         entity_set.maintain();
@@ -130,24 +146,13 @@ impl Game {
     }
 
     fn draw(&mut self, time: &GameTime) {
-        let mut gl_ctx = self.gl_context.as_mut().expect(
-            "GlContext was not created properly!",
-        );
+        let mut gl_ctx = self.gl_context.as_mut().unwrap();
+        let mut world = &mut self.world;
 
         let viewport = Game::build_window_viewport(&self.window);
+        //let mut specs = self.world.get_specs_mut();
 
-        gl_ctx.draw(viewport, |ctx, gl| {
-            gl.clear_color([0.8, 0.8, 0.8, 1.0]);
-
-            let transform = ctx.transform;
-
-            graphics::Rectangle::new([1.0, 0.0, 0.0, 1.0]).draw(
-                [100.0, 100.0, 200.0, 200.0],
-                &ctx.draw_state,
-                transform,
-                gl,
-            );
-        });
+        gl_ctx.draw(viewport, |ctx, gl| { render::render(world, &ctx, gl); });
     }
 
     fn post_frame<C: game_time::FrameCount>(&mut self, time: &GameTime, fps_counter: &C) {
