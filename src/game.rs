@@ -3,6 +3,7 @@ use std::os;
 use world;
 use ecs::component;
 use render;
+use controller;
 
 use graphics;
 use opengl_graphics::{self, GlGraphics};
@@ -10,6 +11,7 @@ use gl;
 use glutin;
 use specs::{self, Join};
 use cgmath;
+use input;
 
 use game_time::{self, GameTime};
 
@@ -19,6 +21,7 @@ pub struct Game {
     is_running: bool,
     world: world::World,
     gl_context: Option<GlGraphics>,
+    input: input::InputManager,
 }
 
 impl Game {
@@ -33,6 +36,7 @@ impl Game {
             is_running: false,
             world: world::World::new(entity_set),
             gl_context: None,
+            input: input::InputManager::new(),
         }
     }
 
@@ -78,6 +82,9 @@ impl Game {
                     height: 25.0,
                 }),
             ))
+            .with(component::controller::Control::new(
+                Box::new(controller::HumanController::new()),
+            ))
             .build();
 
         entity_set.maintain();
@@ -121,22 +128,30 @@ impl Game {
 
     fn handle_events(&mut self) {
         use glutin::{Event, WindowEvent};
+        self.input = input::InputManager::new();
 
         let mut is_running = true;
-        self.evt_loop.poll_events(|evt| match evt {
-            Event::WindowEvent { event: e, .. } => {
-                match e {
-                    WindowEvent::Closed => is_running = false,
-                    WindowEvent::KeyboardInput(state, code, virt, modi) => {
-                        println!("{:?} {} {:?} {:?}", state, code, virt, modi);
+
+        {
+            let input = &mut self.input;
+
+            self.evt_loop.poll_events(|evt| match evt {
+                Event::WindowEvent { event: e, .. } => {
+                    match e {
+                        WindowEvent::Closed => is_running = false,
+                        WindowEvent::KeyboardInput(..) => {
+                            input.translate_event(e);
+                        }
+                        WindowEvent::ReceivedCharacter(..) => {
+                            input.translate_event(e);
+                        }
+                        _ => (),
                     }
-                    WindowEvent::ReceivedCharacter(ch) => {
-                        println!("Char: {}", ch);
-                    }
-                    _ => (),
                 }
-            }
-        });
+            });
+        }
+
+        self.world.get_specs_mut().add_resource(self.input.clone());
 
         self.is_running = is_running;
     }
@@ -144,6 +159,7 @@ impl Game {
     fn update(&mut self, time: &GameTime) {
         let mut dispatcher = specs::DispatcherBuilder::new()
             .add(component::pos::MovementSystem, "movement", &[])
+            .add(component::controller::ControlSystem, "control", &[])
             .build();
         dispatcher.dispatch(&mut self.world.get_specs_mut().res);
 
@@ -155,7 +171,6 @@ impl Game {
         let mut world = &mut self.world;
 
         let viewport = Game::build_window_viewport(&self.window);
-        //let mut specs = self.world.get_specs_mut();
 
         gl_ctx.draw(viewport, |ctx, gl| { render::render(world, &ctx, gl); });
     }

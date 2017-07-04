@@ -26,6 +26,11 @@ pub struct InputMap<'a> {
     mapping: HashMap<InputEvent, u32>,
 }
 
+#[derive(Debug, Clone)]
+pub struct InputManager {
+    inputs: Vec<InputEvent>,
+}
+
 impl<'a> InputMap<'a> {
     pub fn new(directory: CommandDirectory<'a>) -> InputMap<'a> {
         InputMap {
@@ -64,5 +69,47 @@ impl From<winit::ModifiersState> for Modifiers {
             alt: from.alt,
             super_key: from.logo,
         }
+    }
+}
+
+impl InputManager {
+    pub fn new() -> InputManager {
+        InputManager { inputs: Vec::new() }
+    }
+
+    pub fn translate_event(&mut self, evt: WindowEvent) -> bool {
+        let input_event = match evt {
+            WindowEvent::KeyboardInput(state, code, virt, modi) => {
+                println!("{:?} {} {:?} {:?}", state, code, virt, modi);
+                if state == ElementState::Pressed {
+                    virt.map(|v| InputEvent::VirtKey(v, modi.into()))
+                } else {
+                    None
+                }
+            }
+            WindowEvent::ReceivedCharacter(ch) => {
+                println!("Char: {}", ch);
+                Some(InputEvent::Character(ch))
+            }
+            _ => None,
+        };
+
+        if let Some(e) = input_event {
+            self.inputs.push(e);
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn get_events(&self) -> &Vec<InputEvent> {
+        &self.inputs
+    }
+
+    pub fn len(&self) -> usize {
+        self.inputs.len()
+    }
+    pub fn is_empty(&self) -> bool {
+        self.inputs.is_empty()
     }
 }
