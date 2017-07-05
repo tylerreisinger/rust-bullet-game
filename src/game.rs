@@ -109,7 +109,7 @@ impl Game {
             let time = clock.tick(&game_time::step::FixedStep::new(&fps_counter));
             fps_counter.tick(&time);
 
-            self.handle_events();
+            self.handle_events(&time);
 
             self.world
                 .get_specs_mut()
@@ -126,30 +126,26 @@ impl Game {
         }
     }
 
-    fn handle_events(&mut self) {
+    fn handle_events(&mut self, time: &GameTime) {
         use glutin::{Event, WindowEvent};
-        self.input = input::InputManager::new();
 
         let mut is_running = true;
-
         {
             let input = &mut self.input;
 
             self.evt_loop.poll_events(|evt| match evt {
                 Event::WindowEvent { event: e, .. } => {
+                    input.translate_event(&e, time);
                     match e {
                         WindowEvent::Closed => is_running = false,
-                        WindowEvent::KeyboardInput(..) => {
-                            input.translate_event(e);
-                        }
-                        WindowEvent::ReceivedCharacter(..) => {
-                            input.translate_event(e);
-                        }
                         _ => (),
                     }
                 }
             });
         }
+
+        let events = self.input.get_events(time);
+        println!("{:?}", events);
 
         self.world.get_specs_mut().add_resource(self.input.clone());
 
